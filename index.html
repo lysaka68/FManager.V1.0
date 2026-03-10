@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Личен Финансов Мениджър от Людмил Тончев</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161e;
+    --surface2: #1a1e2a;
+    --surface3: #222738;
+    --gold: #c9a84c;
+    --gold2: #e8c97a;
+    --gold-dim: rgba(201,168,76,0.15);
+    --green: #4caf82;
+    --green-dim: rgba(76,175,130,0.15);
+    --red: #e05c5c;
+    --red-dim: rgba(224,92,92,0.15);
+    --blue: #5c8ae0;
+    --blue-dim: rgba(92,138,224,0.15);
+    --text: #e8e4d8;
+    --text2: #9a9584;
+    --text3: #5a5650;
+    --border: rgba(201,168,76,0.12);
+    --border2: rgba(255,255,255,0.06);
+    --shadow: 0 8px 40px rgba(0,0,0,0.6);
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow: hidden;
+    font-size: 14px;
+  }
+
+  /* Ambient bg */
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background: radial-gradient(ellipse 80% 50% at 20% 10%, rgba(201,168,76,0.04) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 40% at 80% 80%, rgba(76,138,224,0.04) 0%, transparent 60%);
+    pointer-events:none; z-index:0;
+  }
+
+  .app { display:flex; height:100vh; position:relative; z-index:1; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 220px; flex-shrink:0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display:flex; flex-direction:column;
+    padding: 24px 16px;
+    gap: 4px;
+  }
+
+  .logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 600;
+    color: var(--gold);
+    letter-spacing: 0.02em;
+    padding: 8px 12px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+  .logo span { color: var(--text2); font-weight:300; font-size:13px; display:block; margin-top:2px; }
+
+  .nav-btn {
+    display:flex; align-items:center; gap:10px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    border: none; background: transparent;
+    color: var(--text2); cursor:pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px; font-weight:400;
+    transition: all 0.2s; text-align:left; width:100%;
+  }
+  .nav-btn:hover { background: var(--surface2); color: var(--text); }
+  .nav-btn.active { background: var(--gold-dim); color: var(--gold); }
+  .nav-btn .icon { font-size:16px; width:20px; text-align:center; }
+
+  .nav-section { font-size:10px; font-weight:600; color: var(--text3); letter-spacing:0.1em;
+    text-transform:uppercase; padding: 16px 12px 6px; }
+
+  .sidebar-bottom { margin-top:auto; display:flex; flex-direction:column; gap:4px; }
+
+  /* ── MAIN ── */
+  .main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+
+  /* TOPBAR */
+  .topbar {
+    display:flex; align-items:center; gap:12px;
+    padding: 16px 28px;
+    border-bottom: 1px solid var(--border2);
+    background: rgba(13,15,20,0.8);
+    backdrop-filter: blur(10px);
+  }
+  .topbar-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px; font-weight:500; color: var(--text);
+    flex:1;
+  }
+  .topbar-actions { display:flex; gap:8px; }
+
+  .btn {
+    display:inline-flex; align-items:center; gap:6px;
+    padding: 8px 16px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border2);
+    background: var(--surface2); color: var(--text2);
+    cursor:pointer; font-family:'DM Sans',sans-serif;
+    font-size: 13px; font-weight:500;
+    transition: all 0.2s; white-space:nowrap;
+  }
+  .btn:hover { border-color: var(--border); color: var(--text); background: var(--surface3); }
+  .btn.btn-gold { background: var(--gold); color: #0d0f14; border-color: var(--gold); font-weight:600; }
+  .btn.btn-gold:hover { background: var(--gold2); border-color: var(--gold2); }
+  .btn.btn-ghost { background:transparent; border-color:transparent; }
+  .btn.btn-ghost:hover { background: var(--surface2); border-color: var(--border2); }
+
+  /* CONTENT */
+  .content { flex:1; overflow-y:auto; padding:24px 28px; }
+  .content::-webkit-scrollbar { width:5px; }
+  .content::-webkit-scrollbar-track { background:transparent; }
+  .content::-webkit-scrollbar-thumb { background:var(--surface3); border-radius:10px; }
+
+  /* PANELS */
+  .panel { display:none; }
+  .panel.active { display:block; }
+
+  /* ── DASHBOARD ── */
+  .balance-hero {
+    background: linear-gradient(135deg, var(--surface2) 0%, var(--surface3) 100%);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px 36px;
+    margin-bottom: 24px;
+    position:relative; overflow:hidden;
+  }
+  .balance-hero::before {
+    content:'';
+    position:absolute; top:-40px; right:-40px;
+    width:200px; height:200px;
+    border-radius:50%;
+    background: radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%);
+  }
+  .balance-label { font-size:12px; color:var(--text2); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:8px; }
+  .balance-amount {
+    font-family:'Cormorant Garamond',serif;
+    font-size: 52px; font-weight:600;
+    color: var(--gold);
+    line-height:1;
+  }
+  .balance-currency { font-size:22px; color:var(--text2); margin-left:6px; }
+  .balance-change { margin-top:12px; font-size:13px; color: var(--text2); }
+  .balance-change span { color: var(--green); }
+
+  .stats-grid { display:grid; grid-template-columns: repeat(3,1fr); gap:16px; margin-bottom:24px; }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 20px;
+    transition: border-color 0.2s, transform 0.2s;
+    cursor:default;
+  }
+  .stat-card:hover { border-color: var(--border); transform: translateY(-2px); }
+  .stat-card .stat-icon { font-size:24px; margin-bottom:12px; }
+  .stat-card .stat-label { font-size:11px; color:var(--text2); letter-spacing:0.06em; text-transform:uppercase; margin-bottom:6px; }
+  .stat-card .stat-value { font-family:'Cormorant Garamond',serif; font-size:28px; font-weight:600; }
+  .stat-card .stat-value.green { color:var(--green); }
+  .stat-card .stat-value.red { color:var(--red); }
+  .stat-card .stat-value.blue { color:var(--blue); }
+  .stat-card .stat-sub { font-size:12px; color:var(--text3); margin-top:4px; }
+
+  /* Action Buttons */
+  .action-row { display:flex; gap:12px; margin-bottom:24px; }
+  .action-btn {
+    flex:1; padding:16px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border2);
+    cursor:pointer;
+    font-family:'DM Sans',sans-serif;
+    font-size:15px; font-weight:500;
+    transition: all 0.25s;
+    display:flex; align-items:center; justify-content:center; gap:10px;
+  }
+  .action-btn.income { background: var(--green-dim); color: var(--green); border-color: rgba(76,175,130,0.25); }
+  .action-btn.income:hover { background: rgba(76,175,130,0.22); transform:translateY(-2px); box-shadow: 0 8px 24px rgba(76,175,130,0.1); }
+  .action-btn.expense { background: var(--red-dim); color: var(--red); border-color: rgba(224,92,92,0.25); }
+  .action-btn.expense:hover { background: rgba(224,92,92,0.22); transform:translateY(-2px); box-shadow: 0 8px 24px rgba(224,92,92,0.1); }
+  .action-btn.savings { background: var(--blue-dim); color: var(--blue); border-color: rgba(92,138,224,0.25); }
+  .action-btn.savings:hover { background: rgba(92,138,224,0.22); transform:translateY(-2px); box-shadow: 0 8px 24px rgba(92,138,224,0.1); }
+  .action-btn .btn-icon { font-size:20px; }
+
+  /* Transactions */
+  .section-title {
+    font-family:'Cormorant Garamond',serif;
+    font-size:18px; font-weight:500;
+    color:var(--text); margin-bottom:14px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .section-title::after { content:''; flex:1; height:1px; background:var(--border2); }
+
+  .transactions-list { display:flex; flex-direction:column; gap:8px; }
+  .tx-item {
+    display:flex; align-items:center; gap:14px;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    transition: border-color 0.2s;
+    animation: slideIn 0.3s ease;
+  }
+  .tx-item:hover { border-color: var(--border); }
+  @keyframes slideIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+  .tx-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .tx-dot.green { background:var(--green); }
+  .tx-dot.red { background:var(--red); }
+  .tx-dot.blue { background:var(--blue); }
+  .tx-info { flex:1; }
+  .tx-desc { font-size:13.5px; font-weight:500; color:var(--text); }
+  .tx-date { font-size:11px; color:var(--text3); margin-top:2px; }
+  .tx-note { font-size:11px; color:var(--text2); font-style:italic; }
+  .tx-amount { font-family:'Cormorant Garamond',serif; font-size:18px; font-weight:600; }
+  .tx-amount.green { color:var(--green); }
+  .tx-amount.red { color:var(--red); }
+  .tx-amount.blue { color:var(--blue); }
+  .tx-delete { background:none; border:none; color:var(--text3); cursor:pointer; font-size:16px; padding:2px 4px;
+    border-radius:4px; transition:color 0.2s, background 0.2s; }
+  .tx-delete:hover { color:var(--red); background:var(--red-dim); }
+
+  /* ── TRANSACTION FORM ── */
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px;
+    max-width: 600px;
+  }
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .form-group { display:flex; flex-direction:column; gap:8px; }
+  .form-group.full { grid-column:1/-1; }
+  label { font-size:11px; font-weight:600; color:var(--text2); letter-spacing:0.07em; text-transform:uppercase; }
+  input[type=text], input[type=number], textarea, select {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family:'DM Sans',sans-serif;
+    font-size:14px;
+    padding: 10px 14px;
+    outline:none;
+    transition: border-color 0.2s;
+    width:100%;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--gold); }
+  textarea { resize:vertical; min-height:80px; }
+  select option { background: var(--surface2); }
+  .type-tabs { display:flex; gap:8px; }
+  .type-tab {
+    flex:1; padding:10px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border2);
+    background:transparent; color:var(--text2);
+    cursor:pointer; font-family:'DM Sans',sans-serif;
+    font-size:13px; font-weight:500; transition:all 0.2s; text-align:center;
+  }
+  .type-tab.active.income { background:var(--green-dim); color:var(--green); border-color:rgba(76,175,130,0.3); }
+  .type-tab.active.expense { background:var(--red-dim); color:var(--red); border-color:rgba(224,92,92,0.3); }
+  .type-tab.active.savings { background:var(--blue-dim); color:var(--blue); border-color:rgba(92,138,224,0.3); }
+
+  /* ── NOTES ── */
+  .notes-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .note-card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    overflow:hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .note-card:hover { border-color:var(--border); }
+  .note-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border2);
+    background: var(--surface2);
+  }
+  .note-title { font-size:13px; font-weight:500; color:var(--text); }
+  .note-body { padding:16px; }
+  .note-body textarea {
+    width:100%; min-height:160px;
+    background:transparent; border:none;
+    color:var(--text); font-size:13.5px; line-height:1.6;
+    resize:none; outline:none; font-family:'DM Sans',sans-serif;
+  }
+
+  /* Shopping list */
+  .shop-input-row { display:flex; gap:8px; margin-bottom:16px; }
+  .shop-input-row input { flex:1; }
+  .shop-items { display:flex; flex-direction:column; gap:6px; }
+  .shop-item {
+    display:flex; align-items:center; gap:10px;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border2);
+    transition: all 0.2s;
+  }
+  .shop-item.done { opacity:0.5; }
+  .shop-item.done .shop-item-text { text-decoration:line-through; color:var(--text3); }
+  .shop-checkbox {
+    width:16px; height:16px; border-radius:4px;
+    border: 1.5px solid var(--text3);
+    background:transparent; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; transition:all 0.2s;
+  }
+  .shop-item.done .shop-checkbox { background:var(--green); border-color:var(--green); }
+  .shop-item-text { flex:1; font-size:13.5px; color:var(--text); }
+  .shop-price { font-size:13px; color:var(--gold); font-weight:500; }
+  .shop-delete { background:none; border:none; color:var(--text3); cursor:pointer; font-size:14px; padding:2px 4px; border-radius:3px; transition:all 0.2s; }
+  .shop-delete:hover { color:var(--red); background:var(--red-dim); }
+
+  /* ── CALCULATOR ── */
+  .calc-wrap { max-width: 340px; margin: 0 auto; }
+  .calc-display {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    text-align:right;
+  }
+  .calc-expr { font-size:12px; color:var(--text3); min-height:18px; font-family:'DM Sans',sans-serif; }
+  .calc-value {
+    font-family:'Cormorant Garamond',serif;
+    font-size: 42px; font-weight:600;
+    color:var(--gold); line-height:1.1;
+    word-break:break-all;
+  }
+  .calc-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .calc-btn {
+    padding: 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border2);
+    background: var(--surface);
+    color: var(--text);
+    cursor:pointer;
+    font-family:'Cormorant Garamond',serif;
+    font-size:20px; font-weight:500;
+    transition: all 0.15s;
+    aspect-ratio:1;
+  }
+  .calc-btn:hover { background:var(--surface3); border-color:var(--border); transform:scale(1.04); }
+  .calc-btn:active { transform:scale(0.96); }
+  .calc-btn.op { color:var(--gold); background:var(--gold-dim); border-color:rgba(201,168,76,0.2); }
+  .calc-btn.op:hover { background:rgba(201,168,76,0.22); }
+  .calc-btn.eq { background:var(--gold); color:#0d0f14; border-color:var(--gold); font-size:22px; font-weight:700; }
+  .calc-btn.eq:hover { background:var(--gold2); }
+  .calc-btn.clear { color:var(--red); background:var(--red-dim); border-color:rgba(224,92,92,0.2); }
+  .calc-btn.wide { aspect-ratio:auto; grid-column:span 2; }
+
+  /* ── CURRENCY ── */
+  .currency-wrap { max-width:500px; }
+  .currency-flags { display:grid; grid-template-columns: repeat(5,1fr); gap:8px; margin-bottom:24px; }
+  .flag-btn {
+    padding:12px 8px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border2);
+    background: var(--surface);
+    cursor:pointer; text-align:center;
+    transition: all 0.2s;
+  }
+  .flag-btn:hover { border-color:var(--border); background:var(--surface2); }
+  .flag-btn.active { border-color:var(--gold); background:var(--gold-dim); }
+  .flag-btn .flag { font-size:22px; display:block; margin-bottom:4px; }
+  .flag-btn .code { font-size:11px; font-weight:600; color:var(--text2); letter-spacing:0.05em; }
+  .flag-btn.active .code { color:var(--gold); }
+
+  .conv-card {
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:28px;
+  }
+  .conv-input-row { display:flex; align-items:center; gap:16px; margin-bottom:24px; }
+  .conv-input-wrap { flex:1; }
+  .conv-input-wrap label { font-size:10px; font-weight:600; color:var(--text3); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:6px; display:block; }
+  .conv-input-wrap .curr-label { font-size:12px; color:var(--text2); margin-top:4px; }
+  .conv-arrow { font-size:20px; color:var(--text3); flex-shrink:0; margin-top:18px; }
+  .conv-result {
+    background:var(--surface2);
+    border:1px solid var(--border);
+    border-radius:var(--radius-sm);
+    padding: 20px 24px;
+    margin-top:20px;
+  }
+  .conv-result-label { font-size:11px; color:var(--text2); letter-spacing:0.06em; text-transform:uppercase; margin-bottom:6px; }
+  .conv-result-value {
+    font-family:'Cormorant Garamond',serif;
+    font-size:38px; font-weight:600; color:var(--gold);
+  }
+  .conv-rate-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-top:20px; }
+  .rate-cell { background:var(--surface2); border:1px solid var(--border2); border-radius:var(--radius-sm); padding:12px; text-align:center; }
+  .rate-cell .rate-curr { font-size:10px; font-weight:600; color:var(--text3); letter-spacing:0.06em; }
+  .rate-cell .rate-val { font-family:'Cormorant Garamond',serif; font-size:16px; font-weight:600; color:var(--text); margin-top:4px; }
+
+  /* ── SETTINGS ── */
+  .settings-wrap { max-width:560px; display:flex; flex-direction:column; gap:20px; }
+  .settings-section {
+    background:var(--surface);
+    border:1px solid var(--border2);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .settings-section-head {
+    padding:14px 20px;
+    background:var(--surface2);
+    border-bottom:1px solid var(--border2);
+    font-size:12px; font-weight:600; color:var(--text2);
+    letter-spacing:0.07em; text-transform:uppercase;
+  }
+  .setting-row {
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border2);
+  }
+  .setting-row:last-child { border-bottom:none; }
+  .setting-name { font-size:14px; font-weight:500; color:var(--text); }
+  .setting-desc { font-size:12px; color:var(--text3); margin-top:2px; }
+  .toggle {
+    width:42px; height:24px; border-radius:12px;
+    background:var(--surface3);
+    border:1px solid var(--border2);
+    cursor:pointer; position:relative;
+    transition:background 0.25s;
+  }
+  .toggle.on { background:var(--gold); border-color:var(--gold); }
+  .toggle::after {
+    content:''; position:absolute;
+    top:3px; left:3px;
+    width:16px; height:16px;
+    border-radius:50%; background:#fff;
+    transition: transform 0.25s;
+  }
+  .toggle.on::after { transform:translateX(18px); }
+  .currency-select select { min-width:120px; }
+
+  /* Toasts */
+  .toast-wrap { position:fixed; bottom:24px; right:24px; display:flex; flex-direction:column; gap:8px; z-index:9999; }
+  .toast {
+    background:var(--surface2);
+    border:1px solid var(--border);
+    border-radius:var(--radius-sm);
+    padding:12px 18px;
+    font-size:13px; color:var(--text);
+    display:flex; align-items:center; gap:8px;
+    animation: toastIn 0.3s ease;
+    box-shadow: var(--shadow);
+    max-width:280px;
+  }
+  .toast.success .toast-icon { color:var(--green); }
+  .toast.error .toast-icon { color:var(--red); }
+  .toast.info .toast-icon { color:var(--blue); }
+  @keyframes toastIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
+  @keyframes toastOut { from { opacity:1; transform:translateX(0); } to { opacity:0; transform:translateX(20px); } }
+
+  /* MODAL */
+  .modal-overlay {
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,0.7); backdrop-filter:blur(4px);
+    z-index:1000; align-items:center; justify-content:center;
+  }
+  .modal-overlay.open { display:flex; }
+  .modal {
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:32px;
+    width:480px; max-width:90vw;
+    animation: modalIn 0.25s ease;
+    box-shadow: var(--shadow);
+  }
+  @keyframes modalIn { from { opacity:0; transform:scale(0.94) translateY(10px); } to { opacity:1; transform:scale(1); } }
+  .modal-title { font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:600; color:var(--gold); margin-bottom:20px; }
+  .modal-footer { display:flex; gap:10px; justify-content:flex-end; margin-top:24px; }
+
+  /* Empty state */
+  .empty-state { text-align:center; padding:48px 24px; color:var(--text3); }
+  .empty-state .empty-icon { font-size:40px; margin-bottom:12px; }
+  .empty-state p { font-size:14px; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width:5px; height:5px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:var(--surface3); border-radius:10px; }
+
+  /* Category badges */
+  .cat-badge {
+    display:inline-block; padding:2px 8px; border-radius:20px;
+    font-size:10px; font-weight:600; letter-spacing:0.05em;
+    text-transform:uppercase;
+  }
+  .cat-badge.green { background:var(--green-dim); color:var(--green); }
+  .cat-badge.red { background:var(--red-dim); color:var(--red); }
+  .cat-badge.blue { background:var(--blue-dim); color:var(--blue); }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">ФинансМ <span>Личен мениджър</span>Людмил Тончев<span></div>
+
+    <div class="nav-section">Основно</div>
+    <button class="nav-btn active" onclick="showPanel('dashboard', this)">
+      <span class="icon">◈</span> Табло
+    </button>
+    <button class="nav-btn" onclick="showPanel('transactions', this)">
+      <span class="icon">⇅</span> Транзакции
+    </button>
+    <button class="nav-btn" onclick="showPanel('notes', this)">
+      <span class="icon">✎</span> Бележки
+    </button>
+    <button class="nav-btn" onclick="showPanel('shopping', this)">
+      <span class="icon">◎</span> Пазаруване
+    </button>
+
+    <div class="nav-section">Инструменти</div>
+    <button class="nav-btn" onclick="showPanel('calculator', this)">
+      <span class="icon">⊞</span> Калкулатор
+    </button>
+    <button class="nav-btn" onclick="showPanel('currency', this)">
+      <span class="icon">⟳</span> Конвертор
+    </button>
+
+    <div class="sidebar-bottom">
+      <div class="nav-section">Системни</div>
+      <button class="nav-btn" onclick="showPanel('settings', this)">
+        <span class="icon">⚙</span> Настройки
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">Финансово Табло</div>
+      <div class="topbar-actions">
+        <button class="btn" onclick="undoLast()" title="Отмяна">↩ Отмени</button>
+        <button class="btn" onclick="exportData()" title="Експорт">📤 Експорт</button>
+        <button class="btn" onclick="document.getElementById('import-input').click()" title="Импорт">📥 Импорт</button>
+        <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(event)">
+        <button class="btn btn-gold" onclick="saveData()">💾 Запази</button>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div id="panel-dashboard" class="panel active">
+        <div class="balance-hero">
+          <div class="balance-label">Общ Баланс</div>
+          <div class="balance-amount" id="total-balance">0<span class="balance-currency" id="balance-curr-sym">лв</span></div>
+          <div class="balance-change">Приходи: <span id="dash-income">0 лв</span> &nbsp;|&nbsp; Разходи: <span style="color:var(--red)" id="dash-expense">0 лв</span> &nbsp;|&nbsp; Спестявания: <span style="color:var(--blue)" id="dash-savings">0 лв</span></div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">📈</div>
+            <div class="stat-label">Приходи</div>
+            <div class="stat-value green" id="stat-income">0 лв</div>
+            <div class="stat-sub" id="stat-income-count">0 транзакции</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">📉</div>
+            <div class="stat-label">Разходи</div>
+            <div class="stat-value red" id="stat-expense">0 лв</div>
+            <div class="stat-sub" id="stat-expense-count">0 транзакции</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🏦</div>
+            <div class="stat-label">Спестявания</div>
+            <div class="stat-value blue" id="stat-savings">0 лв</div>
+            <div class="stat-sub" id="stat-savings-count">0 транзакции</div>
+          </div>
+        </div>
+        <div class="action-row">
+          <button class="action-btn income" onclick="openModal('income')">
+            <span class="btn-icon">＋</span> Приход
+          </button>
+          <button class="action-btn expense" onclick="openModal('expense')">
+            <span class="btn-icon">－</span> Разход
+          </button>
+          <button class="action-btn savings" onclick="openModal('savings')">
+            <span class="btn-icon">◎</span> Спестявания
+          </button>
+        </div>
+        <div class="section-title">Последни Транзакции</div>
+        <div class="transactions-list" id="recent-list">
+          <div class="empty-state"><div class="empty-icon">◈</div><p>Все още няма транзакции</p></div>
+        </div>
+      </div>
+
+      <!-- TRANSACTIONS -->
+      <div id="panel-transactions" class="panel">
+        <div class="action-row" style="margin-bottom:24px">
+          <button class="action-btn income" onclick="openModal('income')"><span class="btn-icon">＋</span> Приход</button>
+          <button class="action-btn expense" onclick="openModal('expense')"><span class="btn-icon">－</span> Разход</button>
+          <button class="action-btn savings" onclick="openModal('savings')"><span class="btn-icon">◎</span> Спестявания</button>
+        </div>
+        <div class="section-title">Всички Транзакции</div>
+        <div class="transactions-list" id="all-list">
+          <div class="empty-state"><div class="empty-icon">⇅</div><p>Все още няма транзакции</p></div>
+        </div>
+      </div>
+
+      <!-- NOTES -->
+      <div id="panel-notes" class="panel">
+        <div class="notes-grid">
+          <div class="note-card">
+            <div class="note-header">
+              <span class="note-title">✎ Бележки</span>
+              <button class="btn btn-ghost" style="padding:4px 8px;font-size:12px" onclick="clearNote('notes1')">Изчисти</button>
+            </div>
+            <div class="note-body">
+              <textarea id="notes1" placeholder="Напишете вашите бележки тук..." oninput="autoSaveNotes()"></textarea>
+            </div>
+          </div>
+          <div class="note-card">
+            <div class="note-header">
+              <span class="note-title">📋 Допълнителни бележки</span>
+              <button class="btn btn-ghost" style="padding:4px 8px;font-size:12px" onclick="clearNote('notes2')">Изчисти</button>
+            </div>
+            <div class="note-body">
+              <textarea id="notes2" placeholder="Допълнителни бележки, планове, цели..." oninput="autoSaveNotes()"></textarea>
+            </div>
+          </div>
+          <div class="note-card" style="grid-column:1/-1">
+            <div class="note-header">
+              <span class="note-title">🎯 Финансови Цели</span>
+              <button class="btn btn-ghost" style="padding:4px 8px;font-size:12px" onclick="clearNote('notes3')">Изчисти</button>
+            </div>
+            <div class="note-body">
+              <textarea id="notes3" style="min-height:120px" placeholder="Запишете вашите финансови цели: спестяване, инвестиции, покупки..."></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SHOPPING -->
+      <div id="panel-shopping" class="panel">
+        <div class="section-title">Списък за Пазаруване</div>
+        <div style="max-width:600px">
+          <div class="shop-input-row">
+            <input type="text" id="shop-name" placeholder="Продукт / артикул..." onkeydown="if(event.key==='Enter')addShopItem()">
+            <input type="number" id="shop-price" placeholder="Цена" style="width:120px" onkeydown="if(event.key==='Enter')addShopItem()">
+            <button class="btn btn-gold" onclick="addShopItem()">+ Добави</button>
+          </div>
+          <div class="shop-items" id="shop-list">
+            <div class="empty-state"><div class="empty-icon">◎</div><p>Списъкът е празен</p></div>
+          </div>
+          <div style="margin-top:16px; display:flex; gap:12px; align-items:center; justify-content:space-between;">
+            <span style="color:var(--text2);font-size:13px">Общо: <span id="shop-total" style="color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600">0 лв</span></span>
+            <button class="btn" onclick="clearDoneItems()">Изчисти отметнатите</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CALCULATOR -->
+      <div id="panel-calculator" class="panel">
+        <div class="calc-wrap">
+          <div class="section-title" style="margin-bottom:20px">Калкулатор</div>
+          <div class="calc-display">
+            <div class="calc-expr" id="calc-expr"></div>
+            <div class="calc-value" id="calc-display">0</div>
+          </div>
+          <div class="calc-grid">
+            <button class="calc-btn clear wide" onclick="calcClear()">AC</button>
+            <button class="calc-btn op" onclick="calcBackspace()">⌫</button>
+            <button class="calc-btn op" onclick="calcOp('%')">%</button>
+
+            <button class="calc-btn" onclick="calcNum('7')">7</button>
+            <button class="calc-btn" onclick="calcNum('8')">8</button>
+            <button class="calc-btn" onclick="calcNum('9')">9</button>
+            <button class="calc-btn op" onclick="calcOp('÷')">÷</button>
+
+            <button class="calc-btn" onclick="calcNum('4')">4</button>
+            <button class="calc-btn" onclick="calcNum('5')">5</button>
+            <button class="calc-btn" onclick="calcNum('6')">6</button>
+            <button class="calc-btn op" onclick="calcOp('×')">×</button>
+
+            <button class="calc-btn" onclick="calcNum('1')">1</button>
+            <button class="calc-btn" onclick="calcNum('2')">2</button>
+            <button class="calc-btn" onclick="calcNum('3')">3</button>
+            <button class="calc-btn op" onclick="calcOp('−')">−</button>
+
+            <button class="calc-btn wide" onclick="calcNum('0')">0</button>
+            <button class="calc-btn" onclick="calcDot()">.</button>
+            <button class="calc-btn op" onclick="calcOp('+')">+</button>
+
+            <button class="calc-btn eq wide" onclick="calcEquals()">=</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CURRENCY -->
+      <div id="panel-currency" class="panel">
+        <div class="currency-wrap">
+          <div class="section-title" style="margin-bottom:20px">Валутен Конвертор</div>
+          <div class="currency-flags">
+            <button class="flag-btn active" id="from-BGN" onclick="setFromCurr('BGN')"><span class="flag">🇧🇬</span><span class="code">BGN</span></button>
+            <button class="flag-btn" id="from-EUR" onclick="setFromCurr('EUR')"><span class="flag">🇪🇺</span><span class="code">EUR</span></button>
+            <button class="flag-btn" id="from-USD" onclick="setFromCurr('USD')"><span class="flag">🇺🇸</span><span class="code">USD</span></button>
+            <button class="flag-btn" id="from-GBP" onclick="setFromCurr('GBP')"><span class="flag">🇬🇧</span><span class="code">GBP</span></button>
+            <button class="flag-btn" id="from-CHF" onclick="setFromCurr('CHF')"><span class="flag">🇨🇭</span><span class="code">CHF</span></button>
+          </div>
+          <div class="conv-card">
+            <div class="conv-input-row">
+              <div class="conv-input-wrap">
+                <label>Сума (<span id="from-label">BGN — Лев</span>)</label>
+                <input type="number" id="conv-amount" value="100" oninput="convertAll()">
+              </div>
+              <div class="conv-arrow">→</div>
+              <div class="conv-input-wrap">
+                <label>Конвертирай към</label>
+                <select id="conv-to" onchange="convertAll()">
+                  <option value="EUR">🇪🇺 EUR — Евро</option>
+                  <option value="USD">🇺🇸 USD — Долар</option>
+                  <option value="GBP">🇬🇧 GBP — Лира</option>
+                  <option value="CHF">🇨🇭 CHF — Франк</option>
+                  <option value="BGN">🇧🇬 BGN — Лев</option>
+                </select>
+              </div>
+            </div>
+            <div class="conv-result">
+              <div class="conv-result-label">Резултат</div>
+              <div class="conv-result-value" id="conv-result">195.58 EUR</div>
+            </div>
+            <div style="margin-top:20px">
+              <div class="section-title" style="font-size:14px">Всички курсове спрямо <span id="rates-from-label">BGN</span></div>
+              <div class="conv-rate-grid" id="rate-grid"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div id="panel-settings" class="panel">
+        <div class="settings-wrap">
+          <div class="settings-section">
+            <div class="settings-section-head">Показване</div>
+            <div class="setting-row">
+              <div>
+                <div class="setting-name">Основна валута</div>
+                <div class="setting-desc">Валутата за показване на балансите</div>
+              </div>
+              <div class="currency-select">
+                <select id="main-currency" onchange="changeMainCurrency()">
+                  <option value="BGN">🇧🇬 BGN — Лев</option>
+                  <option value="EUR">🇪🇺 EUR — Евро</option>
+                  <option value="USD">🇺🇸 USD — Долар</option>
+                  <option value="GBP">🇬🇧 GBP — Лира</option>
+                  <option value="CHF">🇨🇭 CHF — Франк</option>
+                </select>
+              </div>
+            </div>
+            <div class="setting-row">
+              <div>
+                <div class="setting-name">Автоматично запазване</div>
+                <div class="setting-desc">Запазва данните при всяка промяна</div>
+              </div>
+              <div class="toggle on" id="toggle-autosave" onclick="toggleSetting('autosave')"></div>
+            </div>
+            <div class="setting-row">
+              <div>
+                <div class="setting-name">Звукови известия</div>
+                <div class="setting-desc">Звук при добавяне на транзакции</div>
+              </div>
+              <div class="toggle" id="toggle-sound" onclick="toggleSetting('sound')"></div>
+            </div>
+          </div>
+          <div class="settings-section">
+            <div class="settings-section-head">Експорт / Импорт</div>
+            <div class="setting-row">
+              <div>
+                <div class="setting-name">Експорт на данни</div>
+                <div class="setting-desc">Запазва всички данни в JSON файл на компютъра</div>
+              </div>
+              <button class="btn" onclick="exportData()">📤 Експорт</button>
+            </div>
+            <div class="setting-row">
+              <div>
+                <div class="setting-name">Импорт на данни</div>
+                <div class="setting-desc">Зарежда данни от предишен JSON файл</div>
+              </div>
+              <button class="btn" onclick="document.getElementById('import-input').click()">📥 Импорт</button>
+            </div>
+            <div class="setting-row">
+              <div>
+                <div class="setting-name">Експорт като CSV</div>
+                <div class="setting-desc">Само транзакциите — подходящо за Excel</div>
+              </div>
+              <button class="btn" onclick="exportCSV()">📊 CSV</button>
+            </div>
+          </div>
+            <div class="setting-row">
+              <div>
+                <div class="setting-name">Изчисти всички данни</div>
+                <div class="setting-desc">Изтрива всички транзакции и бележки</div>
+              </div>
+              <button class="btn" style="color:var(--red);border-color:rgba(224,92,92,0.3)" onclick="confirmClearAll()">Изчисти</button>
+            </div>
+            <div class="setting-row">
+              <div>
+                <div class="setting-name">Версия</div>
+                <div class="setting-desc">Личен Финансов Мениджър v1.0</div>
+              </div>
+              <span style="font-size:12px;color:var(--text3)">v1.0.0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div>
+
+<!-- MODAL: Add Transaction -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOnBg(event)">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Добавяне на Приход</div>
+    <div class="form-card" style="background:transparent;border:none;padding:0;max-width:none">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Описание</label>
+          <input type="text" id="tx-desc" placeholder="напр. Заплата, Наем...">
+        </div>
+        <div class="form-group">
+          <label>Сума (лв)</label>
+          <input type="number" id="tx-amount" placeholder="0.00" min="0" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Категория</label>
+          <select id="tx-cat">
+            <option value="">— Избери —</option>
+            <option>Заплата</option>
+            <option>Бонус</option>
+            <option>Наем</option>
+            <option>Храна</option>
+            <option>Транспорт</option>
+            <option>Сметки</option>
+            <option>Развлечение</option>
+            <option>Здраве</option>
+            <option>Спестявания</option>
+            <option>Инвестиция</option>
+            <option>Друго</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Дата</label>
+          <input type="text" id="tx-date" placeholder="дд/мм/гггг">
+        </div>
+        <div class="form-group full">
+          <label>Бележка</label>
+          <textarea id="tx-note" placeholder="Допълнителна бележка..." style="min-height:60px"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Отказ</button>
+      <button class="btn btn-gold" onclick="addTransaction()">✓ Добави</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div class="toast-wrap" id="toasts"></div>
+
+<script>
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+let state = {
+  transactions: [],
+  shopItems: [],
+  notes: { notes1:'', notes2:'', notes3:'' },
+  settings: { autosave: true, sound: false, currency: 'BGN' }
+};
+let history = [];
+let currentModal = null;
+
+const CURR_SYMBOLS = { BGN:'лв', EUR:'€', USD:'$', GBP:'£', CHF:'₣' };
+const CURR_NAMES = { BGN:'Лев', EUR:'Евро', USD:'Долар', GBP:'Лира', CHF:'Франк' };
+
+// Fixed rates relative to BGN
+const RATES_TO_BGN = { BGN:1, EUR:1.9558, USD:1.79, GBP:2.27, CHF:2.01 };
+
+// ── Load saved data ──
+function loadData() {
+  const saved = localStorage.getItem('financeApp');
+  if (saved) {
+    try { state = { ...state, ...JSON.parse(saved) }; } catch(e) {}
+  }
+  // set today
+  const d = new Date();
+  document.getElementById('tx-date').value = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+  applySettings();
+  renderAll();
+}
+
+function saveData(silent=false) {
+  localStorage.setItem('financeApp', JSON.stringify(state));
+  if (!silent) toast('Данните са запазени успешно!', 'success', '💾');
+}
+
+function autoSave() { if (state.settings.autosave) saveData(true); }
+
+// ── Undo ──
+function pushHistory() { history.push(JSON.parse(JSON.stringify(state))); if(history.length>30) history.shift(); }
+function undoLast() {
+  if (!history.length) { toast('Няма действия за отмяна', 'error', '↩'); return; }
+  state = history.pop();
+  renderAll();
+  autoSave();
+  toast('Действието е отменено', 'info', '↩');
+}
+
+// ══════════════════════════════════════
+// NAV
+// ══════════════════════════════════════
+const panelTitles = {
+  dashboard: 'Финансово Табло',
+  transactions: 'Всички Транзакции',
+  notes: 'Бележки',
+  shopping: 'Списък за Пазаруване',
+  calculator: 'Калкулатор',
+  currency: 'Валутен Конвертор',
+  settings: 'Настройки'
+};
+
+function showPanel(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  document.getElementById('topbar-title').textContent = panelTitles[id] || '';
+  if (id === 'currency') { convertAll(); renderRateGrid(); }
+  if (id === 'notes') loadNotes();
+}
+
+// ══════════════════════════════════════
+// TRANSACTIONS
+// ══════════════════════════════════════
+function openModal(type) {
+  currentModal = type;
+  const titles = { income:'Добавяне на Приход', expense:'Добавяне на Разход', savings:'Добавяне на Спестявания' };
+  document.getElementById('modal-title').textContent = titles[type];
+  document.getElementById('tx-desc').value = '';
+  document.getElementById('tx-amount').value = '';
+  document.getElementById('tx-cat').value = '';
+  document.getElementById('tx-note').value = '';
+  document.getElementById('modal-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('tx-desc').focus(), 100);
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+function closeModalOnBg(e) { if (e.target.id === 'modal-overlay') closeModal(); }
+
+function addTransaction() {
+  const desc = document.getElementById('tx-desc').value.trim();
+  const amount = parseFloat(document.getElementById('tx-amount').value);
+  const cat = document.getElementById('tx-cat').value;
+  const date = document.getElementById('tx-date').value;
+  const note = document.getElementById('tx-note').value.trim();
+
+  if (!desc) { toast('Моля въведете описание', 'error', '⚠'); return; }
+  if (isNaN(amount) || amount <= 0) { toast('Моля въведете валидна сума', 'error', '⚠'); return; }
+
+  pushHistory();
+  const tx = { id: Date.now(), type: currentModal, desc, amount, cat, date, note };
+  state.transactions.unshift(tx);
+  closeModal();
+  renderAll();
+  autoSave();
+  const msgs = { income:'Приходът е добавен!', expense:'Разходът е добавен!', savings:'Спестяванията са добавени!' };
+  toast(msgs[currentModal], 'success', currentModal === 'income' ? '📈' : currentModal === 'expense' ? '📉' : '🏦');
+}
+
+function deleteTransaction(id) {
+  pushHistory();
+  state.transactions = state.transactions.filter(t => t.id !== id);
+  renderAll();
+  autoSave();
+  toast('Транзакцията е изтрита', 'info', '🗑');
+}
+
+function renderTransactions(container, limit=null) {
+  const txs = limit ? state.transactions.slice(0, limit) : state.transactions;
+  if (!txs.length) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">⇅</div><p>Все още няма транзакции</p></div>';
+    return;
+  }
+  const colorMap = { income:'green', expense:'red', savings:'blue' };
+  container.innerHTML = txs.map(tx => `
+    <div class="tx-item">
+      <div class="tx-dot ${colorMap[tx.type]}"></div>
+      <div class="tx-info">
+        <div class="tx-desc">${tx.desc} ${tx.cat ? `<span class="cat-badge ${colorMap[tx.type]}">${tx.cat}</span>` : ''}</div>
+        <div class="tx-date">${tx.date}${tx.note ? ` · <span class="tx-note">${tx.note}</span>` : ''}</div>
+      </div>
+      <div class="tx-amount ${colorMap[tx.type]}">${tx.type==='expense'?'-':'+'} ${tx.amount.toFixed(2)} ${CURR_SYMBOLS[state.settings.currency]}</div>
+      <button class="tx-delete" onclick="deleteTransaction(${tx.id})" title="Изтрий">✕</button>
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════
+// RENDER ALL
+// ══════════════════════════════════════
+function renderAll() {
+  const income = state.transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const expense = state.transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const savings = state.transactions.filter(t=>t.type==='savings').reduce((s,t)=>s+t.amount,0);
+  const balance = income - expense;
+  const sym = CURR_SYMBOLS[state.settings.currency];
+
+  document.getElementById('total-balance').innerHTML = `${balance.toFixed(2)}<span class="balance-currency">${sym}</span>`;
+  document.getElementById('dash-income').textContent = `${income.toFixed(2)} ${sym}`;
+  document.getElementById('dash-expense').textContent = `${expense.toFixed(2)} ${sym}`;
+  document.getElementById('dash-savings').textContent = `${savings.toFixed(2)} ${sym}`;
+
+  document.getElementById('stat-income').textContent = `${income.toFixed(2)} ${sym}`;
+  document.getElementById('stat-expense').textContent = `${expense.toFixed(2)} ${sym}`;
+  document.getElementById('stat-savings').textContent = `${savings.toFixed(2)} ${sym}`;
+
+  const iCount = state.transactions.filter(t=>t.type==='income').length;
+  const eCount = state.transactions.filter(t=>t.type==='expense').length;
+  const sCount = state.transactions.filter(t=>t.type==='savings').length;
+  document.getElementById('stat-income-count').textContent = `${iCount} транзакц${iCount===1?'ия':'ии'}`;
+  document.getElementById('stat-expense-count').textContent = `${eCount} транзакц${eCount===1?'ия':'ии'}`;
+  document.getElementById('stat-savings-count').textContent = `${sCount} транзакц${sCount===1?'ия':'ии'}`;
+
+  renderTransactions(document.getElementById('recent-list'), 5);
+  renderTransactions(document.getElementById('all-list'));
+  renderShop();
+}
+
+// ══════════════════════════════════════
+// SHOPPING LIST
+// ══════════════════════════════════════
+function addShopItem() {
+  const name = document.getElementById('shop-name').value.trim();
+  const price = parseFloat(document.getElementById('shop-price').value) || 0;
+  if (!name) { toast('Въведете артикул', 'error', '⚠'); return; }
+  pushHistory();
+  state.shopItems.push({ id: Date.now(), name, price, done: false });
+  document.getElementById('shop-name').value = '';
+  document.getElementById('shop-price').value = '';
+  document.getElementById('shop-name').focus();
+  renderShop();
+  autoSave();
+}
+
+function toggleShopItem(id) {
+  const item = state.shopItems.find(i => i.id === id);
+  if (item) { pushHistory(); item.done = !item.done; renderShop(); autoSave(); }
+}
+
+function deleteShopItem(id) {
+  pushHistory();
+  state.shopItems = state.shopItems.filter(i => i.id !== id);
+  renderShop();
+  autoSave();
+}
+
+function clearDoneItems() {
+  pushHistory();
+  state.shopItems = state.shopItems.filter(i => !i.done);
+  renderShop();
+  autoSave();
+  toast('Отметнатите артикули са изтрити', 'info', '✓');
+}
+
+function renderShop() {
+  const list = document.getElementById('shop-list');
+  if (!state.shopItems.length) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">◎</div><p>Списъкът е празен</p></div>';
+    document.getElementById('shop-total').textContent = `0 ${CURR_SYMBOLS[state.settings.currency]}`;
+    return;
+  }
+  const sym = CURR_SYMBOLS[state.settings.currency];
+  list.innerHTML = state.shopItems.map(item => `
+    <div class="shop-item ${item.done?'done':''}">
+      <div class="shop-checkbox" onclick="toggleShopItem(${item.id})">${item.done?'✓':''}</div>
+      <span class="shop-item-text">${item.name}</span>
+      ${item.price ? `<span class="shop-price">${item.price.toFixed(2)} ${sym}</span>` : ''}
+      <button class="shop-delete" onclick="deleteShopItem(${item.id})">✕</button>
+    </div>
+  `).join('');
+  const total = state.shopItems.filter(i=>!i.done).reduce((s,i)=>s+i.price,0);
+  document.getElementById('shop-total').textContent = `${total.toFixed(2)} ${sym}`;
+}
+
+// ══════════════════════════════════════
+// NOTES
+// ══════════════════════════════════════
+function loadNotes() {
+  ['notes1','notes2','notes3'].forEach(k => {
+    document.getElementById(k).value = state.notes[k] || '';
+  });
+}
+
+function autoSaveNotes() {
+  ['notes1','notes2','notes3'].forEach(k => {
+    state.notes[k] = document.getElementById(k).value;
+  });
+  autoSave();
+}
+
+function clearNote(id) {
+  document.getElementById(id).value = '';
+  state.notes[id] = '';
+  autoSave();
+  toast('Бележката е изчистена', 'info', '✎');
+}
+
+// ══════════════════════════════════════
+// CALCULATOR
+// ══════════════════════════════════════
+let calcState = { display: '0', expr: '', op: null, prev: null, fresh: false };
+
+function calcUpdate() {
+  document.getElementById('calc-display').textContent = calcState.display;
+  document.getElementById('calc-expr').textContent = calcState.expr;
+}
+
+function calcNum(n) {
+  if (calcState.fresh) { calcState.display = n; calcState.fresh = false; }
+  else calcState.display = calcState.display === '0' ? n : calcState.display + n;
+  calcUpdate();
+}
+
+function calcDot() {
+  if (calcState.fresh) { calcState.display = '0.'; calcState.fresh = false; }
+  else if (!calcState.display.includes('.')) calcState.display += '.';
+  calcUpdate();
+}
+
+function calcOp(op) {
+  const val = parseFloat(calcState.display);
+  if (calcState.op && !calcState.fresh) {
+    const res = calcCompute(calcState.prev, val, calcState.op);
+    calcState.display = formatCalc(res);
+    calcState.prev = res;
+  } else {
+    calcState.prev = val;
+  }
+  calcState.op = op;
+  calcState.expr = `${calcState.display} ${op}`;
+  calcState.fresh = true;
+  calcUpdate();
+}
+
+function calcCompute(a, b, op) {
+  switch(op) {
+    case '+': return a + b;
+    case '−': return a - b;
+    case '×': return a * b;
+    case '÷': return b === 0 ? 0 : a / b;
+    case '%': return a * b / 100;
+  }
+  return b;
+}
+
+function calcEquals() {
+  if (calcState.op === null) return;
+  const val = parseFloat(calcState.display);
+  const res = calcCompute(calcState.prev, val, calcState.op);
+  calcState.expr = `${calcState.prev} ${calcState.op} ${val} =`;
+  calcState.display = formatCalc(res);
+  calcState.op = null; calcState.fresh = true; calcState.prev = null;
+  calcUpdate();
+}
+
+function formatCalc(n) {
+  if (isNaN(n) || !isFinite(n)) return 'Грешка';
+  const s = parseFloat(n.toFixed(10)).toString();
+  return s;
+}
+
+function calcClear() { calcState = { display:'0', expr:'', op:null, prev:null, fresh:false }; calcUpdate(); }
+function calcBackspace() {
+  if (calcState.display.length > 1) calcState.display = calcState.display.slice(0,-1);
+  else calcState.display = '0';
+  calcUpdate();
+}
+
+document.addEventListener('keydown', e => {
+  if (document.getElementById('panel-calculator').classList.contains('active')) {
+    if (e.key >= '0' && e.key <= '9') calcNum(e.key);
+    if (e.key === '.') calcDot();
+    if (e.key === '+') calcOp('+');
+    if (e.key === '-') calcOp('−');
+    if (e.key === '*') calcOp('×');
+    if (e.key === '/') { e.preventDefault(); calcOp('÷'); }
+    if (e.key === 'Enter' || e.key === '=') calcEquals();
+    if (e.key === 'Backspace') calcBackspace();
+    if (e.key === 'Escape') calcClear();
+  }
+  if (e.key === 'Escape') closeModal();
+});
+
+// ══════════════════════════════════════
+// CURRENCY
+// ══════════════════════════════════════
+let fromCurr = 'BGN';
+
+function setFromCurr(c) {
+  fromCurr = c;
+  document.querySelectorAll('[id^="from-"]').forEach(b => b.classList.remove('active'));
+  document.getElementById('from-'+c).classList.add('active');
+  document.getElementById('from-label').textContent = `${c} — ${CURR_NAMES[c]}`;
+  document.getElementById('rates-from-label').textContent = c;
+  convertAll();
+  renderRateGrid();
+}
+
+function convertCurrency(amount, from, to) {
+  const inBGN = amount * RATES_TO_BGN[from];
+  return inBGN / RATES_TO_BGN[to];
+}
+
+function convertAll() {
+  const amount = parseFloat(document.getElementById('conv-amount').value) || 0;
+  const to = document.getElementById('conv-to').value;
+  const result = convertCurrency(amount, fromCurr, to);
+  document.getElementById('conv-result').textContent = `${result.toFixed(4)} ${to}`;
+}
+
+function renderRateGrid() {
+  const currs = ['BGN','EUR','USD','GBP','CHF'];
+  const flags = { BGN:'🇧🇬', EUR:'🇪🇺', USD:'🇺🇸', GBP:'🇬🇧', CHF:'🇨🇭' };
+  const grid = document.getElementById('rate-grid');
+  grid.innerHTML = currs.map(c => {
+    const rate = convertCurrency(1, fromCurr, c);
+    return `<div class="rate-cell">
+      <div class="rate-curr">${flags[c]} ${c}</div>
+      <div class="rate-val">${c === fromCurr ? '1.0000' : rate.toFixed(4)}</div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════
+function applySettings() {
+  const s = state.settings;
+  document.getElementById('main-currency').value = s.currency;
+  document.getElementById('toggle-autosave').className = 'toggle' + (s.autosave ? ' on' : '');
+  document.getElementById('toggle-sound').className = 'toggle' + (s.sound ? ' on' : '');
+}
+
+function changeMainCurrency() {
+  pushHistory();
+  state.settings.currency = document.getElementById('main-currency').value;
+  renderAll();
+  autoSave();
+  toast(`Валутата е сменена на ${state.settings.currency}`, 'success', '💱');
+}
+
+function toggleSetting(key) {
+  state.settings[key] = !state.settings[key];
+  applySettings();
+  autoSave(true);
+}
+
+function confirmClearAll() {
+  if (confirm('Сигурни ли сте, че искате да изтриете всички данни?')) {
+    pushHistory();
+    state.transactions = [];
+    state.shopItems = [];
+    state.notes = { notes1:'', notes2:'', notes3:'' };
+    renderAll();
+    loadNotes();
+    autoSave();
+    toast('Всички данни са изтрити', 'info', '🗑');
+  }
+}
+
+// ══════════════════════════════════════
+// TOASTS
+// ══════════════════════════════════════
+function toast(msg, type='success', icon='✓') {
+  const wrap = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span class="toast-icon">${icon}</span> ${msg}`;
+  wrap.appendChild(el);
+  setTimeout(() => {
+    el.style.animation = 'toastOut 0.3s ease forwards';
+    setTimeout(() => el.remove(), 300);
+  }, 2800);
+}
+
+// ══════════════════════════════════════
+// EXPORT / IMPORT
+// ══════════════════════════════════════
+function exportData() {
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const filename = `финанси_${dateStr}.json`;
+  const json = JSON.stringify(state, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast(`Файлът "${filename}" е изтеглен`, 'success', '📤');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!imported.transactions) throw new Error('Невалиден формат');
+      pushHistory();
+      state = { ...state, ...imported };
+      renderAll();
+      loadNotes();
+      applySettings();
+      saveData(true);
+      toast(`Данните от "${file.name}" са заредени успешно!`, 'success', '📥');
+    } catch(err) {
+      toast('Грешка: невалиден или повреден файл', 'error', '⚠');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function exportCSV() {
+  if (!state.transactions.length) { toast('Няма транзакции за експорт', 'error', '⚠'); return; }
+  const BOM = '\uFEFF';
+  const header = 'Тип,Описание,Сума,Категория,Дата,Бележка';
+  const typeMap = { income:'Приход', expense:'Разход', savings:'Спестявания' };
+  const rows = state.transactions.map(t =>
+    [typeMap[t.type], `"${t.desc}"`, t.amount.toFixed(2), `"${t.cat||''}"`, t.date, `"${t.note||''}"`].join(',')
+  );
+  const csv = BOM + header + '\n' + rows.join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `транзакции_${dateStr}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('CSV файлът е изтеглен успешно!', 'success', '📊');
+}
+
+
+loadData();
+convertAll();
+renderRateGrid();
+calcUpdate();
+</script>
+</body>
+</html>
